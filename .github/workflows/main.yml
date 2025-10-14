@@ -2,8 +2,7 @@ name: Update Hagezi wildcard list (strip *)
 
 on:
   schedule:
-    - cron: '10,25,40,55 * * * *'
-  
+    - cron: "0 0 * * *"
   workflow_dispatch: {}
 permissions:
   contents: write
