@@ -2,8 +2,14 @@ name: Update Hagezi wildcard list (strip *)
 
 on:
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: '*/5 * * * *'
+  
   workflow_dispatch: {}
+
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/main.yml'
 permissions:
   contents: write
 
