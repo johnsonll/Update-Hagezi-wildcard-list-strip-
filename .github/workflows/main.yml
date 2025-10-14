@@ -3,7 +3,7 @@ name: Update Hagezi wildcard list (strip *)
 on:
   schedule:
     # 每日 08:00 UTC+8 執行
-    - cron: "/15 0 * * *"
+    - cron: "/15 * * * *"
   workflow_dispatch: {}
   push:
     branches: [ main ]    # 你預設分支名稱
