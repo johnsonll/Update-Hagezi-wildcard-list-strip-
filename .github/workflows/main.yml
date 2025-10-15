@@ -18,7 +18,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          URL="https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/wildcard/ultimate.txt"
+          URL="https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/ultimate.txt"
           mkdir -p output
 
           # 下載（自動重試，避免臨時網路抖動）
@@ -43,6 +43,7 @@ jobs:
           if git diff --staged --quiet; then
             echo "No changes to commit."
           else
-            git commit -m "chore: update ultimate.txt (strip leading *)"
+            LOCAL_TIME=$(date -d '+8 hour' '+%Y-%m-%d %H:%M:%S UTC+8')
+            git commit -m "chore: update ultimate.txt (strip *) at ${LOCAL_TIME}"
             git push
           fi
