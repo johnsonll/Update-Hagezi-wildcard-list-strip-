@@ -44,6 +44,6 @@ jobs:
             echo "No changes to commit."
           else
             LOCAL_TIME=$(date -d '+8 hour' '+%Y-%m-%d %H:%M:%S UTC+8')
-            git commit -m "chore: update ultimate.txt (strip *) at ${LOCAL_TIME}"
+            git commit -m "update ultimate.txt at ${LOCAL_TIME}"
             git push
           fi
