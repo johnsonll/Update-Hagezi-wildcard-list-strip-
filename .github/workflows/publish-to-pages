@@ -1,0 +1,57 @@
+name: Update Hagezi wildcard list (strip *)
+
+on:
+  schedule:
+    - cron: "0 1 * * *"   # 每天 01:00 UTC（台灣 09:00）
+  workflow_dispatch: {}    # ✅ 可手動執行
+
+permissions:
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fetch and transform
+        run: |
+          set -euo pipefail
+          URL="https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/ultimate.txt"
+          mkdir -p public
+
+          # 下載並轉換
+          curl -fsSL --retry 5 --retry-delay 3 "$URL" -o /tmp/ultimate.txt
+
+          # 移除行首 *，若為 *. 則保留 .
+          sed -E 's/^\*(\.)?/\1/' /tmp/ultimate.txt > public/ultimate.txt
+          sed -i 's/\r$//' public/ultimate.txt
+
+          # 顯示執行時間（UTC+8）
+          LOCAL_TIME=$(date -d '+8 hour' '+%Y-%m-%d %H:%M:%S UTC+8')
+          echo "Generated at ${LOCAL_TIME}"
+          echo "=== Preview (前5行) ==="
+          head -n 5 public/ultimate.txt || true
+
+          # 防止 Jekyll 忽略底線開頭檔案
+          touch public/.nojekyll
+
+      - name: Upload artifact for GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./public
+
+  deploy:
+    needs: update
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+    steps:
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
