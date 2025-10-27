@@ -41,6 +41,33 @@ jobs:
 
           # 防止 Jekyll 忽略底線開頭檔案
           touch public/.nojekyll
+           # 建立 index.html，讓網站首頁可直接顯示與下載檔案
+          cat > public/index.html <<EOF
+          <!DOCTYPE html>
+          <html lang="zh-Hant">
+          <head>
+            <meta charset="UTF-8" />
+            <title>Hagezi Wildcard List (Processed)</title>
+            <style>
+              body { font-family: "Noto Sans TC", sans-serif; padding: 2rem; line-height: 1.6; background: #f6f8fa; color: #222; }
+              h1 { color: #0366d6; }
+              a { color: #d63384; }
+              pre { background: #fff; border: 1px solid #ddd; padding: 1rem; overflow-x: auto; }
+            </style>
+          </head>
+          <body>
+            <h1>✅ Hagezi Wildcard List (Processed)</h1>
+            <p>本頁自動生成於：${LOCAL_TIME}</p>
+            <p><a href="ultimate.txt" download>點此下載最新檔案</a></p>
+            <hr>
+            <h2>前 20 行預覽：</h2>
+            <pre>$(head -n 20 public/ultimate.txt)</pre>
+          </body>
+          </html>
+          EOF
+
+          # 設定 CNAME（自訂網域）
+          echo "github.yuying45.win" > public/CNAME
 
       - name: Upload artifact for GitHub Pages
         uses: actions/upload-pages-artifact@v3
