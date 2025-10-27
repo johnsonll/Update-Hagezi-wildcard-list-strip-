@@ -61,7 +61,7 @@ jobs:
             <p><a href="ultimate.txt" download>點此下載最新檔案</a></p>
             <hr>
             <h2>前 20 行預覽：</h2>
-            <pre>$(head -n 20 public/ultimate.txt)</pre>
+            <pre>$(head -n 12 public/ultimate.txt)</pre>
           </body>
           </html>
           EOF
