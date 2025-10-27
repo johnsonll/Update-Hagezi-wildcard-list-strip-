@@ -60,7 +60,7 @@ jobs:
             <p>本頁自動生成於：${LOCAL_TIME}</p>
             <p><a href="ultimate.txt" download>點此下載最新檔案</a></p>
             <hr>
-            <h2>前 20 行預覽：</h2>
+            <h2>檔案預覽：</h2>
             <pre>$(head -n 12 public/ultimate.txt)</pre>
           </body>
           </html>
