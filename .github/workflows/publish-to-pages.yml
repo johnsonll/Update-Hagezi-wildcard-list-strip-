@@ -23,15 +23,19 @@ jobs:
       - name: Fetch and transform
         run: |
           set -euo pipefail
-          URL="https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/ultimate.txt"
+          URL="https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/wildcard/ultimate-onlydomains.txt"
           mkdir -p public
 
           # 下載並轉換
           curl -fsSL --retry 5 --retry-delay 3 "$URL" -o /tmp/ultimate.txt
 
-          # 移除行首 *，若為 *. 則保留 .
-          sed -E 's/^\*(\.)?/\1/' /tmp/ultimate.txt > public/ultimate.txt
+          # 讀取 /tmp/ultimate.txt，
+          # 略過 # 開頭的行，
+          # 其餘的行前面加上 DOMAIN-SUFFIX,
+          # 寫入 public/ultimate.txt
+          sed -E '/^[^#]/ s/^/DOMAIN-SUFFIX,/' /tmp/ultimate.txt > public/ultimate.txt
           sed -i 's/\r$//' public/ultimate.txt
+
 
           # 顯示執行時間（UTC+8）
           LOCAL_TIME=$(date -d '+8 hour' '+%Y-%m-%d %H:%M:%S UTC+8')
