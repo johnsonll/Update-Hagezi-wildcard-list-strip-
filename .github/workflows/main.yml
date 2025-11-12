@@ -1,0 +1,89 @@
+name: Update Hagezi wildcard list (strip *)
+
+on:
+  schedule:
+    - cron: "0 1 * * *"   # 每天 01:00 UTC（台灣 09:00）
+  workflow_dispatch: {}    # ✅ 可手動執行
+
+permissions:
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fetch and transform
+        run: |
+          set -euo pipefail
+          URL="https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/wildcard/pro.plus-onlydomains.txt"
+          mkdir -p public
+
+          # 下載並轉換
+          curl -fsSL --retry 5 --retry-delay 3 "$URL" -o /tmp/pro.txt
+
+          # 讀取 /tmp/pro.txt，
+          # 略過 # 開頭的行，
+          # 其餘的行前面加上 DOMAIN-SUFFIX,
+          # 寫入 public/pro.txt
+          sed -E '/^[^#]/ s/^/DOMAIN-SUFFIX,/' /tmp/pro.txt > public/pro.txt
+          sed -i 's/\r$//' public/pro.txt
+
+
+          # 顯示執行時間（UTC+8）
+          LOCAL_TIME=$(date -d '+8 hour' '+%Y-%m-%d %H:%M:%S UTC+8')
+          echo "Generated at ${LOCAL_TIME}"
+          echo "=== Preview (前5行) ==="
+          head -n 5 public/pro.txt || true
+
+          # 防止 Jekyll 忽略底線開頭檔案
+          touch public/.nojekyll
+           # 建立 index.html，讓網站首頁可直接顯示與下載檔案
+          cat > public/index.html <<EOF
+          <!DOCTYPE html>
+          <html lang="zh-Hant">
+          <head>
+            <meta charset="UTF-8" />
+            <title>Hagezi Wildcard List (Processed)</title>
+            <style>
+              body { font-family: "Noto Sans TC", sans-serif; padding: 2rem; line-height: 1.6; background: #f6f8fa; color: #222; }
+              h1 { color: #0366d6; }
+              a { color: #d63384; }
+              pre { background: #fff; border: 1px solid #ddd; padding: 1rem; overflow-x: auto; }
+            </style>
+          </head>
+          <body>
+            <h1>✅ Hagezi Wildcard List (Processed)</h1>
+            <p>本頁自動生成於：${LOCAL_TIME}</p>
+            <p><a href="pro.txt" download>點此下載最新檔案 pro</a></p>
+            <p><a href="ultimate.txt" download>點此下載最新檔案 ultimate</a></p>
+            <hr>
+            <h2>檔案預覽：</h2>
+            <pre>$(head -n 20 public/pro.txt)</pre>
+          </body>
+          </html>
+          EOF
+
+          # 設定 CNAME（自訂網域）
+          echo "github.yuying45.win" > public/CNAME
+
+      - name: Upload artifact for GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./public
+
+  deploy:
+    needs: update
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+    steps:
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
