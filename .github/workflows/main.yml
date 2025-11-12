@@ -1,8 +1,6 @@
 name: Update Hagezi wildcard list (strip *)
 
 on:
-  schedule:
-    - cron: "0 1 * * *"   # 每天 01:00 UTC（台灣 09:00）
   workflow_dispatch: {}    # ✅ 可手動執行
 
 permissions:
