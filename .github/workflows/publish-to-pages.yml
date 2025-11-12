@@ -62,10 +62,11 @@ jobs:
           <body>
             <h1>✅ Hagezi Wildcard List (Processed)</h1>
             <p>本頁自動生成於：${LOCAL_TIME}</p>
-            <p><a href="ultimate.txt" download>點此下載最新檔案</a></p>
+            <p><a href="pro.txt" download>點此下載最新檔案 pro</a></p>
+            <p><a href="ultimate.txt" download>點此下載最新檔案 ultimate</a></p>
             <hr>
             <h2>檔案預覽：</h2>
-            <pre>$(head -n 12 public/ultimate.txt)</pre>
+            <pre>$(head -n 20 public/ultimate.txt)</pre>
           </body>
           </html>
           EOF
