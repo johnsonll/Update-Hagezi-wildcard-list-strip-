@@ -1,9 +1,9 @@
-name: Update Hagezi wildcard list (strip *)
+name: Update Hagezi Lists (TIF & Ultimate)
 
 on:
-  schedule:
-    - cron: "0 1 * * *"   # 每天 01:00 UTC（台灣 09:00）
   workflow_dispatch: {}    # ✅ 可手動執行
+  schedule:
+    - cron: '0 1 * * *'    # ⏰ 每日台灣時間 10:00 (UTC 02:00)
 
 permissions:
   pages: write
@@ -23,55 +23,86 @@ jobs:
       - name: Fetch and transform
         run: |
           set -euo pipefail
-          URL="https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/wildcard/ultimate-onlydomains.txt"
           mkdir -p public
 
-          # 下載並轉換
-          curl -fsSL --retry 5 --retry-delay 3 "$URL" -o /tmp/ultimate.txt
+          # =======================================================
+          # 1. 處理 TIF (Threat Intelligence Feeds)
+          # =======================================================
+          URL_TIF="https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/wildcard/tif-onlydomains.txt"
+          echo "正在處理 TIF 列表..."
 
-          # 讀取 /tmp/ultimate.txt，
-          # 略過 # 開頭的行，
-          # 其餘的行前面加上 DOMAIN-SUFFIX,
-          # 寫入 public/ultimate.txt
+          curl -fsSL --retry 5 --retry-delay 3 "$URL_TIF" -o /tmp/tif.txt
+          sed -E '/^[^#]/ s/^/DOMAIN-SUFFIX,/' /tmp/tif.txt > public/TIF.txt
+          sed -i 's/\r$//' public/TIF.txt
+
+          # =======================================================
+          # 2. 處理 Ultimate (原本是另一隻在跑，現在整合進來)
+          # =======================================================
+          URL_ULTIMATE="https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/wildcard/ultimate-onlydomains.txt"
+          echo "正在處理 Ultimate 列表..."
+
+          curl -fsSL --retry 5 --retry-delay 3 "$URL_ULTIMATE" -o /tmp/ultimate.txt
           sed -E '/^[^#]/ s/^/DOMAIN-SUFFIX,/' /tmp/ultimate.txt > public/ultimate.txt
           sed -i 's/\r$//' public/ultimate.txt
 
-
-          # 顯示執行時間（UTC+8）
+          # =======================================================
+          # 3. 生成頁面 (index.html)
+          # =======================================================
+          
           LOCAL_TIME=$(date -d '+8 hour' '+%Y-%m-%d %H:%M:%S UTC+8')
           echo "Generated at ${LOCAL_TIME}"
-          echo "=== Preview (前5行) ==="
-          head -n 5 public/ultimate.txt || true
 
           # 防止 Jekyll 忽略底線開頭檔案
           touch public/.nojekyll
-           # 建立 index.html，讓網站首頁可直接顯示與下載檔案
+          
+          # 建立 index.html
           cat > public/index.html <<EOF
           <!DOCTYPE html>
           <html lang="zh-Hant">
           <head>
             <meta charset="UTF-8" />
-            <title>Hagezi Wildcard List (Processed)</title>
+            <title>Hagezi Wildcard Lists (Surge)</title>
             <style>
               body { font-family: "Noto Sans TC", sans-serif; padding: 2rem; line-height: 1.6; background: #f6f8fa; color: #222; }
-              h1 { color: #0366d6; }
-              a { color: #d63384; }
-              pre { background: #fff; border: 1px solid #ddd; padding: 1rem; overflow-x: auto; }
+              h1 { color: #d63384; }
+              a { color: #0366d6; text-decoration: none; font-weight: bold; font-size: 1.1rem;}
+              a:hover { text-decoration: underline; }
+              .box { background: #fff; border: 1px solid #ddd; padding: 1.5rem; margin-bottom: 1rem; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);}
+              ul { list-style-type: none; padding: 0; }
+              li { margin-bottom: 10px; }
+              .tag { display: inline-block; padding: 2px 6px; font-size: 0.8rem; border-radius: 4px; color: #fff; margin-left: 8px; vertical-align: middle;}
+              .tag-tif { background-color: #d9534f; }
+              .tag-ult { background-color: #f0ad4e; }
             </style>
           </head>
           <body>
-            <h1>✅ Hagezi Wildcard List (Processed)</h1>
+            <h1>🛡️ Hagezi Lists for Surge</h1>
             <p>本頁自動生成於：${LOCAL_TIME}</p>
-            <p><a href="pro.txt" download>點此下載最新檔案 pro</a></p>
-            <p><a href="ultimate.txt" download>點此下載最新檔案 ultimate</a></p>
+            
+            <div class="box">
+              <h3>📥 規則下載區</h3>
+              <p>以下檔案皆已轉換為 <code>DOMAIN-SUFFIX</code> 格式，可直接用於 Surge。</p>
+              <ul>
+                <li>
+                  <a href="TIF.txt" download>⬇️ 下載 TIF.txt</a>
+                  <span class="tag tag-tif">高威脅防護</span>
+                  <br><small style="color:#666;">Threat Intelligence Feeds (惡意軟體、釣魚、殭屍網路)</small>
+                </li>
+                <li style="margin-top: 15px;">
+                  <a href="ultimate.txt" download>⬇️ 下載 ultimate.txt</a>
+                  <span class="tag tag-ult">最強力廣告阻擋</span>
+                  <br><small style="color:#666;">Hagezi Ultimate (包含 Pro++ 與更多過濾規則)</small>
+                </li>
+              </ul>
+            </div>
+
             <hr>
-            <h2>檔案預覽：</h2>
-            <pre>$(head -n 20 public/ultimate.txt)</pre>
+            <p><small>Source: <a href="https://github.com/hagezi/dns-blocklists" target="_blank">hagezi/dns-blocklists</a></small></p>
           </body>
           </html>
           EOF
 
-          # 設定 CNAME（自訂網域）
+          # 設定 CNAME
           echo "github.yuying45.win" > public/CNAME
 
       - name: Upload artifact for GitHub Pages
