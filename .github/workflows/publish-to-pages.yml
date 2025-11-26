@@ -28,21 +28,23 @@ jobs:
           # =======================================================
           # 1. 處理 TIF (Threat Intelligence Feeds)
           # =======================================================
-          URL_TIF="https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/wildcard/tif-onlydomains.txt"
+          URL_TIF="https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/wildcard/tif.txt"
           echo "正在處理 TIF 列表..."
 
           curl -fsSL --retry 5 --retry-delay 3 "$URL_TIF" -o /tmp/tif.txt
-          sed -E '/^[^#]/ s/^/DOMAIN-SUFFIX,/' /tmp/tif.txt > public/TIF.txt
+           # 移除行首 *，若為 *. 則保留 .
+          sed -E 's/^\*(\.)?/\1/' /tmp/tif.txt > public/TIF.txt
           sed -i 's/\r$//' public/TIF.txt
 
           # =======================================================
           # 2. 處理 Ultimate (原本是另一隻在跑，現在整合進來)
           # =======================================================
-          URL_ULTIMATE="https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/wildcard/ultimate-onlydomains.txt"
+          URL_ULTIMATE="https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/wildcard/ultimate.txt"
           echo "正在處理 Ultimate 列表..."
 
           curl -fsSL --retry 5 --retry-delay 3 "$URL_ULTIMATE" -o /tmp/ultimate.txt
-          sed -E '/^[^#]/ s/^/DOMAIN-SUFFIX,/' /tmp/ultimate.txt > public/ultimate.txt
+           # 移除行首 *，若為 *. 則保留 .
+          sed -E 's/^\*(\.)?/\1/' /tmp/ultimate.txt > public/ultimate.txt
           sed -i 's/\r$//' public/ultimate.txt
 
           # =======================================================
