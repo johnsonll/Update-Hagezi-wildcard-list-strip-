@@ -1,9 +1,9 @@
-name: Update Hagezi Lists (TIF & Ultimate)
+name: Update Lists (Hagezi & LINE Ads)
 
 on:
   workflow_dispatch: {}    # ✅ 可手動執行
   schedule:
-    - cron: '0 1 * * *'    # ⏰ 每日台灣時間 10:00 (UTC 02:00)
+    - cron: '0 1 * * *'    # ⏰ 每日台灣時間 09:00 (UTC 01:00) - 配合 Hagezi 更新頻率
 
 permissions:
   pages: write
@@ -25,7 +25,7 @@ jobs:
           set -euo pipefail
           mkdir -p public
 
-           # =======================================================
+          # =======================================================
           # 1. 處理 TIF (Threat Intelligence Feeds)
           # =======================================================
           URL_TIF="https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/wildcard/tif-onlydomains.txt"
@@ -36,7 +36,7 @@ jobs:
           sed -i 's/\r$//' public/TIF.txt
 
           # =======================================================
-          # 2. 處理 Ultimate (原本是另一隻在跑，現在整合進來)
+          # 2. 處理 Ultimate
           # =======================================================
           URL_ULTIMATE="https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/wildcard/ultimate-onlydomains.txt"
           echo "正在處理 Ultimate 列表..."
@@ -46,7 +46,19 @@ jobs:
           sed -i 's/\r$//' public/ultimate.txt
 
           # =======================================================
-          # 3. 生成頁面 (index.html)
+          # 3. 處理 LINE Ads Module (移除 system=ios)
+          # =======================================================
+          URL_LINE="https://raw.githubusercontent.com/jkgtw/Surge/master/Modules/LINE-ADs.sgmodule"
+          echo "正在處理 LINE Ads Module..."
+
+          curl -fsSL --retry 5 --retry-delay 3 "$URL_LINE" -o /tmp/line_ads_raw.sgmodule
+          
+          # 使用 sed 刪除包含 "#!system=ios" 的行，並寫入 public
+          sed '/^#!system=ios/d' /tmp/line_ads_raw.sgmodule > public/LINE-ADs.sgmodule
+          sed -i 's/\r$//' public/LINE-ADs.sgmodule
+
+          # =======================================================
+          # 4. 生成頁面 (index.html)
           # =======================================================
           
           LOCAL_TIME=$(date -d '+8 hour' '+%Y-%m-%d %H:%M:%S UTC+8')
@@ -61,7 +73,7 @@ jobs:
           <html lang="zh-Hant">
           <head>
             <meta charset="UTF-8" />
-            <title>Hagezi Wildcard Lists (Surge)</title>
+            <title>Custom Rules & Modules (Surge)</title>
             <style>
               body { font-family: "Noto Sans TC", sans-serif; padding: 2rem; line-height: 1.6; background: #f6f8fa; color: #222; }
               h1 { color: #d63384; }
@@ -73,15 +85,16 @@ jobs:
               .tag { display: inline-block; padding: 2px 6px; font-size: 0.8rem; border-radius: 4px; color: #fff; margin-left: 8px; vertical-align: middle;}
               .tag-tif { background-color: #d9534f; }
               .tag-ult { background-color: #f0ad4e; }
+              .tag-mod { background-color: #00c300; } /* LINE Green */
             </style>
           </head>
           <body>
-            <h1>🛡️ Hagezi Lists for Surge</h1>
+            <h1>🛡️ Custom Lists for Surge</h1>
             <p>本頁自動生成於：${LOCAL_TIME}</p>
             
             <div class="box">
-              <h3>📥 規則下載區</h3>
-              <p>以下檔案皆已轉換為 <code>DOMAIN-SUFFIX</code> 格式，可直接用於 Surge。</p>
+              <h3>📥 規則清單 (Rule Sets)</h3>
+              <p>以下檔案皆已轉換為 <code>DOMAIN-SUFFIX</code> 格式。</p>
               <ul>
                 <li>
                   <a href="TIF.txt" download>⬇️ 下載 TIF.txt</a>
@@ -96,8 +109,19 @@ jobs:
               </ul>
             </div>
 
+            <div class="box">
+              <h3>🧩 模組 (Modules)</h3>
+              <ul>
+                <li>
+                  <a href="LINE-ADs.sgmodule" download>⬇️ 下載 LINE-ADs.sgmodule</a>
+                  <span class="tag tag-mod">LINE 去廣告</span>
+                  <br><small style="color:#666;">Source: jkgtw (已自動移除 system=ios 限制)</small>
+                </li>
+              </ul>
+            </div>
+
             <hr>
-            <p><small>Source: <a href="https://github.com/hagezi/dns-blocklists" target="_blank">hagezi/dns-blocklists</a></small></p>
+            <p><small>Sources: <a href="https://github.com/hagezi/dns-blocklists" target="_blank">hagezi/dns-blocklists</a>, <a href="https://github.com/jkgtw/Surge" target="_blank">jkgtw/Surge</a></small></p>
           </body>
           </html>
           EOF
